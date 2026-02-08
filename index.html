@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>엄마 계산 연습</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f9f9f9;
+}
+button {
+  font-size: 24px;
+  padding: 20px 40px;
+  margin: 20px;
+  cursor: pointer;
+}
+#box {
+  background: white;
+  padding: 30px;
+  margin: 40px auto;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 10px;
+}
+input {
+  font-size: 24px;
+  width: 150px;
+  text-align: center;
+}
+.result {
+  font-size: 22px;
+  margin-top: 20px;
+}
+</style>
+</head>
+<body>
+
+<div id="box">
+  <div id="menu">
+    <button onclick="startSimple()">단순연산</button>
+    <button onclick="startMarket()">활용연산</button>
+  </div>
+
+  <div id="game" style="display:none;">
+    <p id="question" style="font-size:26px;"></p>
+    <input type="number" id="answer">
+    <br><br>
+    <button onclick="checkAnswer()">확인</button>
+    <p class="result" id="result"></p>
+    <p id="count"></p>
+    <br>
+    <button onclick="goMenu()">처음으로</button>
+  </div>
+</div>
+
+<script>
+let mode = "";
+let correctAnswer = 0;
+let questionCount = 0;
+
+function goMenu() {
+  document.getElementById("menu").style.display = "block";
+  document.getElementById("game").style.display = "none";
+}
+
+function startSimple() {
+  mode = "simple";
+  questionCount = 0;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  nextQuestion();
+}
+
+function startMarket() {
+  mode = "market";
+  questionCount = 0;
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (questionCount >= 30) {
+    questionCount = 0;
+  }
+
+  document.getElementById("answer").value = "";
+  document.getElementById("result").innerText = "";
+  questionCount++;
+
+  if (mode === "simple") {
+    let a = Math.floor(Math.random() * 90) + 10;
+    let b = Math.random() > 0.5
+      ? Math.floor(Math.random() * 9) + 1
+      : Math.floor(Math.random() * 90) + 10;
+    correctAnswer = a + b;
+    document.getElementById("question").innerText = `${a} + ${b} = ?`;
+  } else {
+    let price = [1000,2000,3000,5000][Math.floor(Math.random()*4)];
+    let qty = Math.floor(Math.random() * 3) + 1;
+    let paid = [10000,20000][Math.floor(Math.random()*2)];
+    let total = price * qty;
+    correctAnswer = paid - total;
+    document.getElementById("question").innerText =
+      `한 단에 ${price.toLocaleString()}원인 물건을 ${qty}단 샀어요.\n` +
+      `${paid.toLocaleString()}원을 받았어요.\n잔돈은 얼마일까요?`;
+  }
+
+  document.getElementById("count").innerText = `문제 ${questionCount} / 30`;
+}
+
+function checkAnswer() {
+  let user = Number(document.getElementById("answer").value);
+  if (user === correctAnswer) {
+    document.getElementById("result").innerText = "⭕ 정답이에요! 잘했어요!";
+  } else {
+    document.getElementById("result").innerText =
+      `❌ 틀렸어요. 정답은 ${correctAnswer.toLocaleString()}원이에요.`;
+  }
+  setTimeout(nextQuestion, 2000);
+}
+</script>
+
+</body>
+</html>
