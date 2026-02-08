@@ -2,57 +2,56 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>엄마 계산 연습</title>
 
 <style>
 body {
   margin: 0;
   padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   background: #ffffff;
-  font-family: Arial, sans-serif;
 }
 
 .screen {
   width: 100vw;
   height: 100vh;
+  padding: 5vh 5vw;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: space-between;
   text-align: center;
 }
 
 button {
-  width: 90vw;
+  font-size: 5vw;
+  padding: 3vh;
+  border-radius: 16px;
+}
+
+.menu-btn {
   height: 20vh;
-  font-size: 8vw;
-  margin: 3vh 0;
-  border-radius: 20px;
 }
 
 #question {
-  font-size: 7.5vw;
-  line-height: 1.4;
-  margin-bottom: 4vh;
+  font-size: 4.8vw;
+  line-height: 1.6;
   white-space: pre-line;
 }
 
 input {
-  width: 60vw;
-  height: 10vh;
-  font-size: 9vw;
+  font-size: 8vw;
+  padding: 2vh;
   text-align: center;
 }
 
 .result {
-  font-size: 7vw;
-  margin-top: 3vh;
+  font-size: 5vw;
 }
 
 #count {
-  font-size: 5vw;
-  margin-top: 2vh;
+  font-size: 4vw;
   color: gray;
 }
 </style>
@@ -61,16 +60,22 @@ input {
 <body>
 
 <div id="menu" class="screen">
-  <button onclick="startSimple()">단순연산</button>
-  <button onclick="startMarket()">활용연산</button>
+  <button class="menu-btn" onclick="startSimple()">단순연산</button>
+  <button class="menu-btn" onclick="startMarket()">활용연산</button>
 </div>
 
 <div id="game" class="screen" style="display:none;">
   <div id="question"></div>
+
   <input type="number" id="answer" inputmode="numeric">
+
   <button onclick="checkAnswer()">확인</button>
+
+  <button onclick="speakQuestion()">🔊 다시 읽어줘</button>
+
   <div class="result" id="result"></div>
   <div id="count"></div>
+
   <button onclick="goMenu()">처음으로</button>
 </div>
 
@@ -78,8 +83,22 @@ input {
 let mode = "";
 let correctAnswer = 0;
 let questionCount = 0;
+let spokenText = "";
+
+function speak(text) {
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = "ko-KR";
+  msg.rate = 0.8;
+  window.speechSynthesis.speak(msg);
+}
+
+function speakQuestion() {
+  speak(spokenText);
+}
 
 function goMenu() {
+  speechSynthesis.cancel();
   document.getElementById("menu").style.display = "flex";
   document.getElementById("game").style.display = "none";
 }
@@ -113,36 +132,42 @@ function nextQuestion() {
       ? Math.floor(Math.random() * 9) + 1
       : Math.floor(Math.random() * 90) + 10;
     correctAnswer = a + b;
-    document.getElementById("question").innerText =
-      `${a} + ${b} = ?`;
+    spokenText = `${a} 더하기 ${b}는 얼마일까요?`;
+    document.getElementById("question").innerText = `${a} + ${b} = ?`;
   } else {
     let price = [1000,2000,3000][Math.floor(Math.random()*3)];
     let qty = Math.floor(Math.random() * 3) + 1;
     let paid = 10000;
     correctAnswer = paid - price * qty;
+    spokenText =
+      `한 단에 ${price}원인 물건을 ${qty}단 샀어요. ` +
+      `${paid}원을 받았어요. 잔돈은 얼마일까요?`;
     document.getElementById("question").innerText =
       `한 단에 ${price.toLocaleString()}원\n` +
       `${qty}단 샀어요\n\n` +
       `${paid.toLocaleString()}원 받았어요\n\n` +
-      `잔돈은 얼마?`;
+      `잔돈은 얼마일까요?`;
   }
 
   document.getElementById("count").innerText =
     `문제 ${questionCount} / 30`;
+
+  setTimeout(() => speak(spokenText), 500);
 }
 
 function checkAnswer() {
   let user = Number(document.getElementById("answer").value);
   if (user === correctAnswer) {
-    document.getElementById("result").innerText = "⭕ 정답!";
+    document.getElementById("result").innerText = "⭕ 잘했어요!";
+    speak("잘했어요");
   } else {
     document.getElementById("result").innerText =
-      `❌ ${correctAnswer.toLocaleString()}원`;
+      `❌ 정답은 ${correctAnswer}원이에요`;
+    speak(`정답은 ${correctAnswer}원이에요`);
   }
-  setTimeout(nextQuestion, 3000);
+  setTimeout(nextQuestion, 3500);
 }
 </script>
 
 </body>
 </html>
-
