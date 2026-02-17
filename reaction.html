@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>순발력 훈련</title>
+    <style>
+        body {
+            margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Pretendard', sans-serif;
+            background: #f1f8e9;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: white; width: 90%; max-width: 500px; padding: 25px;
+            border-radius: 30px; text-align: center; position: relative; height: 85vh;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        #level-select { display: flex; flex-direction: column; gap: 20px; justify-content: center; height: 100%; }
+        .lv-btn { padding: 25px; border-radius: 20px; border: none; font-size: 26px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; }
+        .lv-btn span { font-size: 16px; font-weight: normal; display: block; margin-top: 5px; }
+        .lv-1 { background-color: #81c784; }
+        .lv-2 { background-color: #ffb74d; }
+        .lv-3 { background-color: #e57373; }
+        #game-area { display: none; height: 100%; position: relative; }
+        .header { display: flex; justify-content: space-around; font-size: 24px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .play-field { position: relative; width: 100%; height: 65vh; background: #f9f9f9; border: 2px dashed #ccc; border-radius: 20px; overflow: hidden; }
+        .target { position: absolute; width: 110px; height: 110px; font-size: 80px; display: flex; justify-content: center; align-items: center; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; z-index: 5; }
+        #result-screen { display: none; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
+        .score-text { font-size: 30px; line-height: 1.6; margin-bottom: 30px; }
+        .home-btn { padding: 20px 40px; background: #333; color: white; border-radius: 20px; font-size: 24px; font-weight: bold; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="level-select">
+        <h1>누구 잡기?</h1>
+        <button class="lv-btn lv-1" onclick="initGame(1)">🦋 나비 잡기 <span>(천천히)</span></button>
+        <button class="lv-btn lv-2" onclick="initGame(2)">🪳 바퀴벌레 잡기 <span>(빠르게)</span></button>
+        <button class="lv-btn lv-3" onclick="initGame(3)">🐭 쥐 잡기 <span>(매우 빠르게)</span></button>
+        <a href="main.html" style="margin-top:20px; color:#888;">돌아가기</a>
+    </div>
+
+    <div id="game-area">
+        <div class="header">
+            <div>⏱ <span id="time">30</span>초</div>
+            <div>점수: <span id="score">0</span></div>
+        </div>
+        <div class="play-field" id="play-field"></div>
+    </div>
+
+    <div id="result-screen">
+        <h1>대단해요!</h1>
+        <p class="score-text">총 <span id="final-score" style="color:#e57373; font-weight:bold;">0</span>마리를<br>잡으셨습니다!</p>
+        <a href="main.html" class="home-btn">처음으로</a>
+    </div>
+</div>
+
+<script>
+    let score = 0;
+    let timeLeft = 30;
+    let gameInterval;
+    let moveSpeed = 1500;
+    let currentEmoji = '🦋';
+    let baseFreq = 523.25; // 높은 도
+
+    // 선명한 '띠링' 소리를 내는 오디오 엔진
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playDing(freq) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        // 두 개의 음을 겹쳐서 풍성한 '띠링' 소리 생성
+        [freq, freq * 1.5].forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'triangle'; // 부드러운 벨소리 느낌
+            osc.frequency.setValueAtTime(f, audioCtx.currentTime + (i * 0.05));
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime + (i * 0.05));
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2 + (i * 0.05));
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(audioCtx.currentTime + (i * 0.05));
+            osc.stop(audioCtx.currentTime + 0.3 + (i * 0.05));
+        });
+    }
+
+    function initGame(level) {
+        document.getElementById('level-select').style.display = 'none';
+        document.getElementById('game-area').style.display = 'block';
+
+        if (level === 1) {
+            currentEmoji = '🦋'; moveSpeed = 1500; baseFreq = 523.25; // 높은 도
+        } else if (level === 2) {
+            currentEmoji = '🪳'; moveSpeed = 900; baseFreq = 659.25; // 높은 미
+        } else {
+            currentEmoji = '🐭'; moveSpeed = 600; baseFreq = 783.99; // 높은 솔
+        }
+        startGame();
+    }
+
+    function startGame() {
+        spawnTarget();
+        gameInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time').innerText = timeLeft;
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+    }
+
+    function spawnTarget() {
+        if (timeLeft <= 0) return;
+        const field = document.getElementById('play-field');
+        field.innerHTML = '';
+        const target = document.createElement('div');
+        target.className = 'target';
+        target.innerText = currentEmoji;
+        
+        const maxX = field.clientWidth - 110;
+        const maxY = field.clientHeight - 110;
+        target.style.left = Math.max(0, Math.random() * maxX) + 'px';
+        target.style.top = Math.max(0, Math.random() * maxY) + 'px';
+
+        // 터치 시작 시 즉각 반응
+        const handleHit = (e) => {
+            e.preventDefault();
+            playDing(baseFreq);
+            score++;
+            document.getElementById('score').innerText = score;
+            spawnTarget();
+        };
+
+        target.onmousedown = handleHit;
+        target.ontouchstart = handleHit; // 모바일 터치 최적화
+
+        field.appendChild(target);
+        clearTimeout(window.moveTimeout);
+        window.moveTimeout = setTimeout(() => { spawnTarget(); }, moveSpeed);
+    }
+
+    function endGame() {
+        clearInterval(gameInterval);
+        clearTimeout(window.moveTimeout);
+        document.getElementById('game-area').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'flex';
+        document.getElementById('final-score').innerText = score;
+    }
+</script>
+
+</body>
+</html>

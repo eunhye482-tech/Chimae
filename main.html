@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>치매 예방 두뇌 훈련소</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 30px; padding: 40px 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            width: 90%; max-width: 400px; text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        h1 { color: white; margin-bottom: 30px; font-size: 32px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .btn {
+            border: none; border-radius: 20px; padding: 25px 10px;
+            font-size: 20px; font-weight: bold; color: white;
+            cursor: pointer; transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex; justify-content: center; align-items: center; text-decoration: none;
+        }
+        .btn:active { transform: scale(0.92); }
+        .color-1 { background-color: #FF6B6B; } 
+        .color-2 { background-color: #4ECDC4; } 
+        .color-3 { background-color: #45B7D1; } 
+        .color-4 { background-color: #FFA07A; } 
+        .color-5 { background-color: #98D8C8; } 
+        .color-6 { background-color: #F7DC6F; } 
+        .color-7 { background-color: #BB8FCE; } /* 우리집 찾기 */
+        .color-8 { background-color: #82E0AA; } 
+        .color-9 { background-color: #F1948A; } 
+        .color-10 { background-color: #85C1E9; }
+        .pending { font-size: 14px; opacity: 0.7; font-weight: normal; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>두뇌 훈련소</h1>
+    <div class="button-grid">
+        <a href="level.html" class="btn color-1">연산</a>
+        <a href="money.html" class="btn color-2">돈계산</a>
+        <a href="memory.html" class="btn color-3">무늬 맞추기</a>
+        <a href="reaction.html" class="btn color-4">순발력 훈련</a>
+        <a href="exercise.html" class="btn color-5">매일 운동</a>
+        <a href="proverb.html" class="btn color-6">속담 퀴즈</a>
+        <a href="direction.html" class="btn color-7">우리집 찾기</a>
+        <div class="btn color-8"><span class="pending">준비중</span></div>
+        <div class="btn color-9"><span class="pending">준비중</span></div>
+        <div class="btn color-10"><span class="pending">준비중</span></div>
+    </div>
+</div>
+</body>
+</html>

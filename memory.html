@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>무늬 맞추기</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: #e3f2fd;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: white; width: 95%; max-width: 500px; padding: 20px;
+            border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+        }
+        /* 타이머를 더 크고 진하게 */
+        .timer { font-size: 32px; font-weight: 800; color: #1976d2; margin-bottom: 20px; }
+        
+        /* 격자 크기 키움 */
+        .grid {
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; /* 카드 사이 간격 */
+            perspective: 1000px;
+        }
+        
+        /* 카드 디자인: 훨씬 크게 수정 */
+        .card {
+            aspect-ratio: 1 / 1; 
+            background-color: #1976d2; 
+            border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 45px; /* 이모지 크기를 대폭 키움 */
+            color: white; cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* 뒤집혔을 때 */
+        .card.flipped {
+            background-color: #fff; 
+            border: 4px solid #1976d2; 
+            color: #000;
+            transform: rotateY(180deg);
+        }
+        
+        /* 맞췄을 때 효과 */
+        .card.matched { 
+            background-color: #f0f0f0; 
+            border: 4px solid #81c784; 
+            cursor: default; 
+            box-shadow: none;
+            opacity: 0.6;
+        }
+        
+        /* 결과 화면 */
+        #result-screen { display: none; }
+        .score-text { font-size: 28px; line-height: 1.6; margin: 30px 0; }
+        .home-btn {
+            display: inline-block; padding: 20px 40px; background: #1976d2;
+            color: white; text-decoration: none; border-radius: 20px; font-size: 24px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-screen">
+    <div class="timer">⏰ <span id="time-display">0</span>초</div>
+    <div class="grid" id="card-grid"></div>
+</div>
+
+<div class="container" id="result-screen">
+    <h1>축하합니다!</h1>
+    <p class="score-text">
+        참 잘하셨습니다!<br>
+        기록: <span id="final-time" style="color:#1976d2;"></span>초 걸렸습니다.
+    </p>
+    <a href="main.html" class="home-btn">처음으로 돌아가기</a>
+</div>
+
+<script>
+    // 어르신들이 인지하기 쉬운 큼직한 아이콘들
+    const icons = ['🍎', '🍓', '🍋', '🍉', '🍇', '🍄', '🥕', '🎁'];
+    let cards = [...icons, ...icons];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let seconds = 0;
+    let timerInterval;
+
+    cards.sort(() => Math.random() - 0.5);
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            seconds++;
+            document.getElementById('time-display').innerText = seconds;
+        }, 1000);
+    }
+
+    function initGame() {
+        const grid = document.getElementById('card-grid');
+        cards.forEach((icon, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.icon = icon;
+            card.innerText = ''; // 뒷면은 비워두거나 작은 점 하나
+            card.onclick = () => flipCard(card);
+            grid.appendChild(card);
+        });
+        startTimer();
+    }
+
+    function flipCard(card) {
+        if (card.classList.contains('flipped') || card.classList.contains('matched') || flippedCards.length === 2) {
+            return;
+        }
+
+        card.classList.add('flipped');
+        card.innerText = card.dataset.icon;
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+            checkMatch();
+        }
+    }
+
+    function checkMatch() {
+        const [card1, card2] = flippedCards;
+        if (card1.dataset.icon === card2.dataset.icon) {
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            matchedPairs++;
+            flippedCards = [];
+            if (matchedPairs === icons.length) {
+                endGame();
+            }
+        } else {
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                card1.innerText = '';
+                card2.innerText = '';
+                flippedCards = [];
+            }, 1000); // 어르신들이 틀린 그림을 기억할 시간을 조금 더 드림 (1초)
+        }
+    }
+
+    function endGame() {
+        clearInterval(timerInterval);
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        document.getElementById('final-time').innerText = seconds;
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>

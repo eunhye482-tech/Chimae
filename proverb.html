@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>속담 박사님</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: #fff9db;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: white; width: 90%; max-width: 450px; padding: 30px;
+            border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+        }
+        .progress { font-size: 20px; color: #f59f00; font-weight: bold; margin-bottom: 15px; }
+        .question-box {
+            background: #fff4e6; padding: 30px 20px; border-radius: 20px;
+            margin: 20px 0; border: 3px solid #ffd8a8;
+        }
+        .question-text { font-size: 28px; line-height: 1.5; color: #333; font-weight: bold; word-break: keep-all; }
+        .options-grid { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
+        .option-btn {
+            padding: 22px; font-size: 24px; font-weight: bold; border: 2px solid #eee;
+            border-radius: 15px; background: white; cursor: pointer; transition: 0.2s;
+        }
+        .correct { background-color: #51cf66 !important; border-color: #40c057 !important; color: white; }
+        .wrong { background-color: #ff6b6b !important; border-color: #fa5252 !important; color: white; }
+        
+        /* 성적표 화면 디자인 강화 */
+        .score-screen { display: none; }
+        .result-card {
+            background: #f8f9fa; border: 4px double #fab005;
+            border-radius: 25px; padding: 30px 20px; margin: 20px 0;
+        }
+        .final-score { font-size: 70px; color: #e67e22; font-weight: 900; margin: 10px 0; }
+        .score-label { font-size: 24px; color: #666; }
+        .rank-text { font-size: 30px; color: #f59f00; font-weight: bold; margin-bottom: 20px; }
+        .home-btn {
+            display: inline-block; padding: 20px 50px; background: #fab005;
+            color: white; text-decoration: none; border-radius: 20px; font-size: 26px; font-weight: bold;
+            box-shadow: 0 4px 0 #d49a00;
+        }
+        .home-btn:active { transform: translateY(4px); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quiz-screen">
+    <div class="progress">질문 <span id="current-idx">1</span> / 10</div>
+    <div class="question-box">
+        <div id="question" class="question-text">문제를 준비 중입니다...</div>
+    </div>
+    <div class="options-grid" id="options"></div>
+</div>
+
+<div class="container score-screen" id="score-screen">
+    <h1 style="font-size: 36px; color: #333;">🎖 성 적 표 🎖</h1>
+    <div class="result-card">
+        <div class="score-label">오늘의 점수</div>
+        <div class="final-score"><span id="final-points">0</span>점</div>
+        <div id="rank-name" class="rank-text">속담 박사님</div>
+        <p id="result-comment" style="font-size: 20px; color: #555; line-height: 1.6;"></p>
+    </div>
+    <a href="main.html" class="home-btn">처음으로</a>
+</div>
+
+<script>
+    const proverbData = [
+        { q: "가는 날이...", a: "장날이다", decoys: ["축제다", "휴일이다", "비온다"] },
+        { q: "가랑비에...", a: "옷 젖는 줄 모른다", decoys: ["감기 걸린다", "신발 젖는다", "기분 좋다"] },
+        { q: "고생 끝에...", a: "낙이 온다", decoys: ["병이 온다", "잠이 온다", "돈이 온다"] },
+        { q: "낫 놓고...", a: "기역자도 모른다", decoys: ["니은자도 모른다", "풀도 못 벤다", "이름도 모른다"] },
+        { q: "누워서...", a: "침 뱉기", decoys: ["잠자기", "떡 먹기", "노래하기"] },
+        { q: "등잔 밑이...", a: "어둡다", decoys: ["밝다", "뜨겁다", "무겁다"] },
+        { q: "마른 하늘에...", a: "날벼락", decoys: ["단비", "무지개", "함박눈"] },
+        { q: "밑 빠진 독에...", a: "물 붓기", decoys: ["기름 붓기", "돈 넣기", "돌 넣기"] },
+        { q: "발 없는 말이...", a: "천리 간다", decoys: ["빨리 간다", "멀리 간다", "뛰어 간다"] },
+        { q: "백지장도...", a: "맞들면 낫다", decoys: ["종이일 뿐이다", "찢기 쉽다", "가볍다"] },
+        { q: "소 잃고...", a: "외양간 고친다", decoys: ["송아지 산다", "대문 고친다", "눈물 흘린다"] },
+        { q: "가는 말이 고와야...", a: "오는 말이 곱다", decoys: ["일이 잘된다", "친구가 생긴다", "잠이 잘 온다"] },
+        { q: "금강산도...", a: "식후경", decoys: ["꽃구경", "잠구경", "물구경"] },
+        { q: "세 살 버릇...", a: "여든까지 간다", decoys: ["마흔까지", "일흔까지", "내일까지"] },
+        { q: "아는 길이...", a: "물어 가라", decoys: ["뛰어 가라", "쉬어 가라", "돌아 가라"] },
+        { q: "원숭이도...", a: "나무에서 떨어진다", decoys: ["잠을 잔다", "노래한다", "춤을 춘다"] },
+        { q: "작은 고추가...", a: "맵다", decoys: ["짜다", "달다", "쓰다"] },
+        { q: "호랑이도 제 말 하면...", a: "온다", decoys: ["간다", "잔다", "운다"] },
+        { q: "구슬이 서 말이라도...", a: "꿰어야 보배", decoys: ["팔아야 돈", "씻어야 반짝", "커야 보배"] },
+        { q: "배보다...", a: "배꼽이 더 크다", decoys: ["배가", "머리가", "팔이"] }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+    let selectedQuestions = [];
+
+    function initQuiz() {
+        selectedQuestions = proverbData.sort(() => Math.random() - 0.5).slice(0, 10);
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const quiz = selectedQuestions[currentIdx];
+        document.getElementById('current-idx').innerText = currentIdx + 1;
+        document.getElementById('question').innerText = quiz.q;
+
+        const options = [quiz.a, ...quiz.decoys].sort(() => Math.random() - 0.5);
+        const container = document.getElementById('options');
+        container.innerHTML = '';
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(opt, btn, quiz.a);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, btn, correct) {
+        const btns = document.querySelectorAll('.option-btn');
+        btns.forEach(b => b.disabled = true);
+
+        if (selected === correct) {
+            btn.classList.add('correct');
+            score++;
+        } else {
+            btn.classList.add('wrong');
+            btns.forEach(b => { if(b.innerText === correct) b.classList.add('correct'); });
+        }
+
+        setTimeout(() => {
+            currentIdx++;
+            if (currentIdx < 10) showQuestion();
+            else showResult();
+        }, 1200);
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('score-screen').style.display = 'block';
+        
+        const finalPoints = score * 10;
+        document.getElementById('final-points').innerText = finalPoints;
+
+        let rank = "";
+        let comment = "";
+
+        if (score === 10) {
+            rank = "🏆 속담 천재";
+            comment = "모든 속담을 다 맞히셨네요!<br>우리 동네에서 가장 지혜로우십니다.";
+        } else if (score >= 7) {
+            rank = "🏅 속담 박사";
+            comment = "기억력이 정말 훌륭하세요!<br>조금만 더 하면 만점도 문제없겠어요.";
+        } else {
+            rank = "😊 속담 우등생";
+            comment = "참 잘하셨습니다!<br>매일매일 연습하면 기억력이 더 좋아질 거예요.";
+        }
+
+        document.getElementById('rank-name').innerText = rank;
+        document.getElementById('result-comment').innerHTML = comment;
+    }
+
+    initQuiz();
+</script>
+</body>
+</html>

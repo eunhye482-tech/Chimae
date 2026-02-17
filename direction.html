@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>엄마의 대구 그림지도</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background-color: #f7f2e8; overflow: hidden; touch-action: none; }
+        
+        /* 상단 미션 보드 */
+        .mission-header {
+            background: #fff; padding: 15px; border-bottom: 6px double #8bc34a;
+            text-align: center; z-index: 100; position: relative;
+        }
+        .m-title { font-size: 24px; color: #33691e; margin: 0; font-weight: 900; }
+        .m-target { font-size: 19px; color: #d35400; margin-top: 8px; font-weight: bold; }
+
+        /* 지도 캔버스 (한 장의 그림) */
+        #map-frame {
+            width: 100vw; height: calc(100vh - 120px); position: relative;
+            background: #eef5e9; /* 수채화 바탕색 */
+            overflow: hidden;
+        }
+
+        /* 병풍 랜드마크 (동서남북 가이드) */
+        .guide-mt { position: absolute; width: 100%; text-align: center; color: rgba(139, 195, 74, 0.4); font-weight: bold; pointer-events: none; }
+        .north { top: 10px; font-size: 40px; } /* 팔공산 */
+        .south { bottom: 10px; font-size: 40px; } /* 앞산 */
+
+        /* 도로 (부드러운 곡선 느낌) */
+        .road-path { position: absolute; background: #fff; border: 4px solid #dcd3c1; border-radius: 40px; z-index: 1; }
+
+        /* 수채화 일러스트 건물 */
+        .place {
+            position: absolute; width: 110px; height: 120px;
+            display: flex; flex-direction: column; align-items: center; z-index: 10;
+        }
+        .place-icon {
+            width: 85px; height: 85px; background: #fff; border: 4px solid #fff;
+            border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            display: flex; justify-content: center; align-items: center; font-size: 45px;
+        }
+        .place-name { font-size: 16px; font-weight: bold; color: #5d4037; margin-top: 5px; text-shadow: 2px 2px 0 white; }
+        
+        /* 목적지 강조 */
+        .is-goal .place-icon { border-color: #ffc107; background: #fffde7; animation: jump 1s infinite; }
+        @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* 엄마 아바타 */
+        #mom-pin {
+            position: absolute; width: 90px; height: 90px; background: #ff5252;
+            border: 5px solid #fff; border-radius: 50%; z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-weight: bold; font-size: 26px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+        }
+
+        /* 점수 알림창 */
+        #report-card {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); z-index: 2000; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mission-header">
+    <p id="lv-text" class="m-title">레벨 1: 우리 동네 한바퀴</p>
+    <div id="goal-text" class="m-target">미션을 준비중입니다...</div>
+</div>
+
+<div id="map-frame">
+    <div class="guide-mt north">⛰️ 팔공산 (북쪽) ⛰️</div>
+    <div class="guide-mt south">⛰️ 앞산 (남쪽) ⛰️</div>
+    
+    <div id="mom-pin">엄마</div>
+</div>
+
+<div id="report-card">
+    <div style="font-size: 100px;">🥇</div>
+    <h2 style="font-size: 40px; color: #2e7d32;">100점 만점!</h2>
+    <p id="report-desc" style="font-size: 24px; color: #555; margin-bottom: 40px;"></p>
+    <button onclick="location.href='main.html'" style="padding: 20px 80px; background: #8bc34a; border: none; border-radius: 20px; font-size: 28px; font-weight: bold; color: white;">참 잘했어요</button>
+</div>
+
+<script>
+    const frame = document.getElementById('map-frame');
+    const pin = document.getElementById('mom-pin');
+    let isMoving = false;
+    let visited = new Set();
+    let currentLv = 1;
+
+    const gameData = {
+        1: {
+            title: "레벨 1: 시장 보고 집으로",
+            mission: "[관문시장]을 들러서 [111동]으로 오세요",
+            must: ["관문시장"],
+            start: { y: 500, x: 50, name: "서부정류장", icon: "🚌" },
+            goal: { y: 100, x: 250, name: "한양수자인 111동", icon: "🏠" },
+            roads: [
+                { y: 500, x: 50, w: 250, h: 80 }, 
+                { y: 100, x: 240, w: 90, h: 480 }
+            ],
+            places: [
+                { name: "관문시장", icon: "🍏", y: 350, x: 230 }
+            ]
+        }
+        // 레벨 2, 3 데이터도 동일한 방식으로 추가 가능
+    };
+
+    function startLevel(lv) {
+        const d = gameData[lv];
+        document.getElementById('lv-text').innerText = d.title;
+        document.getElementById('goal-text').innerText = d.mission;
+        
+        // 도로 그리기
+        d.roads.forEach(r => {
+            const div = document.createElement('div');
+            div.className = 'road-path';
+            div.style.cssText = `top:${r.y}px; left:${r.x}px; width:${r.w}px; height:${r.h}px;`;
+            frame.appendChild(div);
+        });
+
+        // 장소 그리기
+        const allPlaces = [...d.places, d.start, d.goal];
+        allPlaces.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'place' + (p.name === d.goal.name ? ' is-goal' : '');
+            div.style.cssText = `top:${p.y}px; left:${p.x}px;`;
+            div.innerHTML = `<div class="place-icon">${p.icon}</div><div class="place-name">${p.name}</div>`;
+            frame.appendChild(div);
+        });
+
+        // 엄마 배치
+        pin.style.top = d.start.y + 'px';
+        pin.style.left = d.start.x + 'px';
+    }
+
+    // 드래그 로직
+    pin.onpointerdown = (e) => { isMoving = true; pin.setPointerCapture(e.pointerId); };
+    pin.onpointermove = (e) => {
+        if (!isMoving) return;
+        const rect = frame.getBoundingClientRect();
+        let nx = e.clientX - rect.left - 45;
+        let ny = e.clientY - rect.top - 45;
+        pin.style.left = nx + 'px';
+        pin.style.top = ny + 'px';
+        
+        // 경유지 체크
+        gameData[currentLv].places.forEach(p => {
+            if (Math.hypot(nx - p.x, ny - p.y) < 70) visited.add(p.name);
+        });
+    };
+    pin.onpointerup = () => {
+        isMoving = false;
+        const g = gameData[currentLv].goal;
+        const nx = parseInt(pin.style.left);
+        const ny = parseInt(pin.style.top);
+        
+        if (Math.hypot(nx - g.x, ny - g.y) < 80) {
+            const must = gameData[currentLv].must;
+            if (must.every(m => visited.has(m))) {
+                document.getElementById('report-card').style.display = 'flex';
+                document.getElementById('report-desc').innerText = "길을 잃지 않고 정확하게 찾아오셨네요!\n대구 동네 박사로 인정합니다!";
+            } else {
+                alert(`아이코! [${must[0]}]에 들르는 것을 깜빡하셨어요!`);
+            }
+        }
+    };
+
+    startLevel(1);
+</script>
+</body>
+</html>

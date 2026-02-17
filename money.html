@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>생활 돈 계산</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: #fef9e7;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: white; width: 90%; max-width: 450px; padding: 30px;
+            border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+        }
+        .progress { font-size: 18px; color: #888; margin-bottom: 10px; }
+        .place-tag {
+            display: inline-block; padding: 5px 15px; background: #ffeaa7;
+            color: #d68910; border-radius: 20px; font-weight: bold; margin-bottom: 10px;
+        }
+        .question-box {
+            background: #f8f9fa; padding: 20px; border-radius: 20px;
+            margin: 20px 0; border-left: 8px solid #fdcb6e; text-align: left;
+        }
+        .question-text { font-size: 22px; line-height: 1.6; color: #333; word-break: keep-all; }
+        .highlight { color: #e67e22; font-weight: bold; }
+        .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 25px; }
+        .option-btn {
+            padding: 20px; font-size: 20px; font-weight: bold; border: 3px solid #eee;
+            border-radius: 20px; background: white; cursor: pointer; transition: 0.2s;
+        }
+        .option-btn:active { transform: scale(0.95); background: #eee; }
+        
+        /* 정답/오답 효과 */
+        .correct { background-color: #55efc4 !important; border-color: #00b894 !important; color: white; }
+        .wrong { background-color: #ff7675 !important; border-color: #d63031 !important; color: white; }
+
+        /* 성적표 화면 */
+        .score-screen { display: none; }
+        .score-text { font-size: 24px; margin-bottom: 30px; line-height: 1.6; }
+        .home-btn {
+            display: inline-block; padding: 15px 30px; background: #74b9ff;
+            color: white; text-decoration: none; border-radius: 15px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="quiz-screen">
+    <div class="progress"><span id="current-idx">1</span> / 10</div>
+    <div id="place" class="place-tag">시장</div>
+    <div class="question-box">
+        <div id="question" class="question-text">문제를 생성 중입니다...</div>
+    </div>
+    <div class="options-grid" id="options"></div>
+</div>
+
+<div class="container score-screen" id="score-screen">
+    <h1>계산 결과</h1>
+    <p class="score-text" id="result-message"></p>
+    <a href="main.html" class="home-btn">처음으로</a>
+</div>
+
+<script>
+    const storeData = [
+        { name: "☕ 카페", items: [{ name: "아메리카노", price: 4500 }, { name: "카페라떼", price: 5000 }, { name: "치즈케이크", price: 6500 }], moneyUnits: [10000, 20000] },
+        { name: "🥖 빵집", items: [{ name: "식빵", price: 3500 }, { name: "단팥빵", price: 1800 }, { name: "우유", price: 2800 }], moneyUnits: [5000, 10000] },
+        { name: "🍎 과일가게", items: [{ name: "사과 한 봉지", price: 12000 }, { name: "배 한 개", price: 5000 }, { name: "바나나", price: 4500 }], moneyUnits: [20000, 30000, 50000] },
+        { name: "🏪 편의점", items: [{ name: "컵라면", price: 1500 }, { name: "삼각김밥", price: 1200 }, { name: "도시락", price: 5500 }], moneyUnits: [5000, 10000] }
+    ];
+
+    let currentQuestionCount = 0;
+    let score = 0;
+    let currentAnswer = 0;
+
+    function nextQuestion() {
+        if (currentQuestionCount >= 10) {
+            showResult();
+            return;
+        }
+
+        document.getElementById('current-idx').innerText = currentQuestionCount + 1;
+        const store = storeData[Math.floor(Math.random() * storeData.length)];
+        const item = store.items[Math.floor(Math.random() * store.items.length)];
+        let payMoney = store.moneyUnits[Math.floor(Math.random() * store.moneyUnits.length)];
+        while (payMoney <= item.price) { payMoney += 5000; }
+
+        currentAnswer = payMoney - item.price;
+
+        document.getElementById('place').innerText = store.name;
+        document.getElementById('question').innerHTML = 
+            `이곳에서 <span class="highlight">${item.name}</span> 한 개를 샀습니다.<br>` +
+            `가격은 <span class="highlight">${item.price.toLocaleString()}원</span>입니다.<br><br>` +
+            `<span class="highlight">${payMoney.toLocaleString()}원</span>을 냈다면,<br>거스름돈은 얼마일까요?`;
+
+        makeOptions(currentAnswer);
+    }
+
+    function makeOptions(correct) {
+        let options = [correct];
+        while (options.length < 4) {
+            let offset = (Math.floor(Math.random() * 5) - 2) * 500;
+            if (offset === 0) offset = 1000;
+            let rand = correct + offset;
+            if (rand > 0 && !options.includes(rand)) options.push(rand);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        const container = document.getElementById('options');
+        container.innerHTML = '';
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.toLocaleString() + "원";
+            btn.onclick = () => checkAnswer(opt, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, btn) {
+        const btns = document.querySelectorAll('.option-btn');
+        btns.forEach(b => b.disabled = true);
+
+        if (selected === currentAnswer) {
+            btn.classList.add('correct');
+            score++;
+        } else {
+            btn.classList.add('wrong');
+        }
+
+        setTimeout(() => {
+            currentQuestionCount++;
+            nextQuestion();
+        }, 1000); // 1초 뒤 다음 문제
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('score-screen').style.display = 'block';
+        document.getElementById('result-message').innerHTML = 
+            `오늘의 장보기 완료!<br>10문제 중 <b>${score}문제</b>의<br>거스름돈을 정확히 맞히셨습니다.`;
+    }
+
+    nextQuestion();
+</script>
+
+</body>
+</html>
