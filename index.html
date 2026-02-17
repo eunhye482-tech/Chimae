@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>치매 예방 두뇌 훈련소</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Pretendard', sans-serif;
+            background: #e8f5e9; /* 눈이 편안한 초록 배경 */
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container {
+            background: white; border-radius: 30px; padding: 30px 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+        h1 { color: #2e7d32; margin-bottom: 25px; font-size: 28px; font-weight: 900; }
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn {
+            border: none; border-radius: 20px; padding: 20px 10px;
+            font-size: 19px; font-weight: bold; color: white;
+            display: flex; justify-content: center; align-items: center; text-decoration: none;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1); transition: 0.2s;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        
+        /* 버튼 색상 정의 */
+        .color-1 { background-color: #ff6b6b; } 
+        .color-2 { background-color: #4ecdc4; } 
+        .color-3 { background-color: #45b7d1; } 
+        .color-4 { background-color: #ffa07a; } 
+        .color-5 { background-color: #98d8c8; } 
+        .color-6 { background-color: #f7dc6f; color: #333; } 
+        .color-7 { background-color: #bb8fce; } 
+        .pending { font-size: 14px; opacity: 0.6; font-weight: normal; background: #eee; color: #999 !important; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>두뇌 훈련소</h1>
+    <div class="button-grid">
+        <a href="level.html" class="btn color-1">연산</a>
+        <a href="money.html" class="btn color-2">돈계산</a>
+        <a href="memory.html" class="btn color-3">무늬 맞추기</a>
+        <a href="reaction.html" class="btn color-4">순발력 훈련</a>
+        <a href="exercise.html" class="btn color-5">매일 운동</a>
+        <a href="proverb.html" class="btn color-6">속담 퀴즈</a>
+        <a href="direction.html" class="btn color-7">우리집 찾기</a>
+        <div class="btn pending">준비중</div>
+        <div class="btn pending">준비중</div>
+        <div class="btn pending">준비중</div>
+    </div>
+</div>
+</body>
+</html>
